@@ -4,6 +4,8 @@
 
 [English](./README.md) | [中文](./README_CN.md)
 
+🌐 **官网地址**: [https://od.seme.cc](https://od.seme.cc)
+
 ---
 
 ## 什么是 OpenDirector？
