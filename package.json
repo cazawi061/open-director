@@ -2,6 +2,7 @@
   "name": "open-director",
   "version": "0.1.0",
   "private": true,
+  "license": "LGPL-3.0",
   "packageManager": "pnpm@10.0.0",
   "engines": {
     "node": ">=20 <26"
