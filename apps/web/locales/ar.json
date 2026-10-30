@@ -1,1 +1,52 @@
 
+{
+  "Common": {
+    "appName": "استوديو الفيديو الذكي العربي",
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "generate": "توليد",
+    "download": "تحميل",
+    "upload": "رفع",
+    "next": "التالي",
+    "back": "رجوع",
+    "confirm": "تأكيد",
+    "search": "بحث",
+    "settings": "الإعدادات",
+    "language": "اللغة",
+    "arabic": "العربية",
+    "english": "English",
+    "chinese": "中文"
+  },
+  "Home": {
+    "title": "حوّل فكرتك إلى فيديو كامل",
+    "subtitle": "اكتب جملة واحدة، والذكاء الاصطناعي يكتب السيناريو، يرسم الشخصيات، يحرّك الصور، ويضيف الصوت العربي",
+    "startCreating": "ابدأ الإنشاء",
+    "batchMode": "الوضع الجماعي",
+    "creativeMode": "الوضع الإبداعي"
+  },
+  "Chat": {
+    "placeholder": "اكتب فكرتك هنا... مثلاً: قصة كرتونية للأطفال عن عمران والباب السري وسط الغابة",
+    "send": "إرسال",
+    "newChat": "محادثة جديدة",
+    "generating": "جاري توليد الفيديو..."
+  },
+  "Creation": {
+    "storyboard": "لوحة المشاهد",
+    "characters": "الشخصيات",
+    "voices": "الأصوات",
+    "export": "تصدير الفيديو",
+    "thumbnail": "الصورة المصغّرة",
+    "youtubeTitle": "عنوان يوتيوب",
+    "youtubeDescription": "وصف يوتيوب"
+  },
+  "Character": {
+    "addCharacter": "إضافة شخصية",
+    "swapCharacter": "تبديل الشخصية",
+    "consistency": "الحفاظ على ثبات الشخصية",
+    "uploadPhoto": "رفع صورة الشخصية"
+  }
+}
