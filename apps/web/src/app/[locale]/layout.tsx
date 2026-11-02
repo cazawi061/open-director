@@ -1,3 +1,4 @@
+
 import { hasLocale } from "next-intl";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -8,7 +9,7 @@ import "../globals.css";
 
 export const metadata: Metadata = {
   title: "OpenDirector",
-  description: "open source AI video studio.",
+  description: "Open-source AI video studio.",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
@@ -33,10 +34,21 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
 
+  const direction = locale === "ar" ? "rtl" : "ltr";
+
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      dir={direction}
+      suppressHydrationWarning
+    >
       <body>
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider
+          locale={locale}
+          messages={messages}
+        >
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );
