@@ -30,8 +30,7 @@ export function LanguageDropdown({ locale = "en" }: { locale?: Locale }) {
   };
 
   return (
-    <div ref={menuRef} className="relative">
-      <button
+    <div ref={menuRef} className="relative z-50">
         type="button"
         onClick={() => setIsOpen((value) => !value)}
         className="inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
@@ -44,7 +43,7 @@ export function LanguageDropdown({ locale = "en" }: { locale?: Locale }) {
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 mt-3 w-44 rounded-2xl border border-white/10 bg-slate-950 p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]" role="menu">
+        <div className="absolute end-0 mt-3 w-44 rounded-2xl border border-white/10 bg-slate-950 p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)]" role="menu">
           {languageOptions.map((option) => {
             const isCurrent = option.locale === currentLocale;
             return (
