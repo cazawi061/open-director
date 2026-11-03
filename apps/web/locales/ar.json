@@ -76,5 +76,13 @@
     "sceneRecipe": "تفاصيل المشاهد",
     "renderPlan": "خطة الإنتاج",
     "keepsStep": "تحكم في كل مرحلة من مراحل إنتاج الفيديو"
+  },
+  "auth": {
+    "signinToCreate": "سجّل الدخول لإنشاء الفيديو",
+    "signinDescription": "سجّل الدخول إلى حسابك للبدء في إنشاء مشروع الفيديو الخاص بك.",
+    "emailPlaceholder": "البريد الإلكتروني",
+    "passwordPlaceholder": "كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "openSigninPage": "الانتقال إلى صفحة تسجيل الدخول"
   }
 }
