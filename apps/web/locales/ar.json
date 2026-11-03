@@ -83,6 +83,11 @@
     "emailPlaceholder": "البريد الإلكتروني",
     "passwordPlaceholder": "كلمة المرور",
     "signIn": "تسجيل الدخول",
-    "openSigninPage": "الانتقال إلى صفحة تسجيل الدخول"
+    "openSigninPage": "الانتقال إلى صفحة تسجيل الدخول",
+    "finishSignin": "أكمل تسجيل الدخول",
+    "formDescription": "أدخل بريدك الإلكتروني وكلمة المرور للمتابعة",
+    "noAccount": "ليس لديك حساب؟",
+    "signUp": "إنشاء حساب",
+    "agreeTerms": "بالمتابعة، فإنك توافق على شروط الاستخدام"
   }
 }
