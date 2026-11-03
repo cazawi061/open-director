@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
@@ -19,6 +20,11 @@ const homeSlogans: Record<Locale, string[]> = {
     "把一句提示词，拆成可拍的分镜。",
     "让 AI 先搭片场，再交给你定稿。",
     "从灵感到成片，保持导演节奏。",
+  ],
+  ar: [
+    "حوّل فكرتك إلى مشاهد جاهزة للتصوير.",
+    "دع الذكاء الاصطناعي يخطط للمشاهد، ثم أضف لمستك الإبداعية.",
+    "من الفكرة إلى الفيديو النهائي، اصنع قصتك بأسلوب المخرج.",
   ],
 };
 
