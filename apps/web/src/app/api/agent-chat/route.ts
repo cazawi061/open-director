@@ -6,7 +6,7 @@ import { SSEWriter } from "@/server/agent/graph/sse-writer";
 import { isCreateVideoCommand } from "@/server/agent/utils/commands";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 800;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const requestId = globalThis.crypto?.randomUUID?.() || `agent-chat-${Date.now()}`;
