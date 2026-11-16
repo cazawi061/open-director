@@ -9,44 +9,75 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
-  const requestId = globalThis.crypto?.randomUUID?.() || `agent-chat-${Date.now()}`;
+  const requestId =
+    globalThis.crypto?.randomUUID?.() ||
+    `agent-chat-${Date.now()}`;
+
   const startedAt = Date.now();
   const user = await getCurrentUser();
+
   if (!user) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   let body: Record<string, unknown>;
+
   try {
     body = await request.json();
   } catch {
-    return new Response("Invalid JSON body", { status: 400 });
+    return new Response("Invalid JSON body", {
+      status: 400,
+    });
   }
-  const messages = Array.isArray(body.messages) ? body.messages : [];
-  const last = messages[messages.length - 1];
-  const directorBrief = body.directorBrief && typeof body.directorBrief === "object"
-    ? body.directorBrief as Record<string, unknown>
-    : {};
 
-  const confirmDirectorBrief = body.confirmDirectorBrief === true;
-  const originalPrompt = String(body.prompt ?? "").trim();
+  const messages = Array.isArray(body.messages)
+    ? body.messages
+    : [];
+
+  const last = messages[messages.length - 1];
+
+  const directorBrief =
+    body.directorBrief &&
+    typeof body.directorBrief === "object"
+      ? (body.directorBrief as Record<string, unknown>)
+      : {};
+
+  const confirmDirectorBrief =
+    body.confirmDirectorBrief === true;
+
+  const originalPrompt = String(
+    body.prompt ?? ""
+  ).trim();
+
   const prompt = confirmDirectorBrief
-    ? String(directorBrief.project_name || directorBrief.title || originalPrompt || "").trim()
+    ? String(
+        directorBrief.project_name ||
+          directorBrief.title ||
+          originalPrompt ||
+          ""
+      ).trim()
     : originalPrompt;
 
   if (!prompt) {
-    return new Response("Missing prompt", { status: 400 });
+    return new Response("Missing prompt", {
+      status: 400,
+    });
   }
 
   let threadId = String(body.threadId || "").trim();
+
   if (!threadId) {
     const thread = await prisma.thread.create({
-      data: { title: prompt.slice(0, 80), description: prompt, userId: user.id },
+      data: {
+        title: prompt.slice(0, 80),
+        description: prompt,
+        userId: user.id,
+      },
     });
+
     threadId = thread.id;
   }
 
-  // Save user message
   if (confirmDirectorBrief) {
     await prisma.message.create({
       data: {
@@ -54,7 +85,14 @@ export async function POST(request: Request) {
         userId: user.id,
         role: "user",
         content: "",
-        parts: JSON.parse(JSON.stringify([{ type: "text", text: prompt }])) as Prisma.InputJsonValue,
+        parts: JSON.parse(
+          JSON.stringify([
+            {
+              type: "text",
+              text: prompt,
+            },
+          ])
+        ) as Prisma.InputJsonValue,
       },
     });
   } else {
@@ -64,54 +102,113 @@ export async function POST(request: Request) {
         userId: user.id,
         role: "user",
         content: prompt,
-        parts: last ? (JSON.parse(JSON.stringify([last])) as Prisma.InputJsonValue) : undefined,
+        parts: last
+          ? (JSON.parse(
+              JSON.stringify([last])
+            ) as Prisma.InputJsonValue)
+          : undefined,
       },
     });
   }
 
-  const startNode = confirmDirectorBrief ? "recipe_node"
-    : isCreateVideoCommand(prompt) ? "runner_executor"
-    : "director_node";
+  const startNode = confirmDirectorBrief
+    ? "recipe_node"
+    : isCreateVideoCommand(prompt)
+      ? "runner_executor"
+      : "director_node";
 
   const collectedParts: unknown[] = [];
+
   let writer: SSEWriter | undefined;
 
-  console.log(`[agent-chat:${requestId}] request accepted`, {
-    threadId,
-    startNode,
-    promptLength: prompt.length,
-    confirmDirectorBrief,
-  });
+  console.log(
+    `[agent-chat:${requestId}] request accepted`,
+    {
+      threadId,
+      startNode,
+      promptLength: prompt.length,
+      confirmDirectorBrief,
+    }
+  );
 
   const stream = new ReadableStream({
     async start(controller) {
-      writer = new SSEWriter(controller, { requestId });
+      writer = new SSEWriter(controller, {
+        requestId,
+      });
+
       const onAbort = () => {
         const elapsedMs = Date.now() - startedAt;
-        console.warn(`[agent-chat:${requestId}] request signal aborted`, { threadId, elapsedMs });
+
+        console.warn(
+          `[agent-chat:${requestId}] request signal aborted`,
+          {
+            threadId,
+            elapsedMs,
+          }
+        );
+
         writer?.markClosed("request-signal-abort");
       };
-      request.signal.addEventListener("abort", onAbort, { once: true });
 
-      // Wrap write to collect parts for persistence
+      request.signal.addEventListener(
+        "abort",
+        onAbort,
+        { once: true }
+      );
+
       const originalWrite = writer.write.bind(writer);
-      writer.write = (event: string, data: unknown) => {
+
+      writer.write = (
+        event: string,
+        data: unknown
+      ) => {
         const written = originalWrite(event, data);
+
         if (!written) return false;
-        if (event === "agent-status" || event === "runner-progress" || event === "done" || event === "error") return true;
-        // Deduplicate recipe and media-assets events: keep only the latest
-        if (event === "recipe" || event === "media-assets") {
-          for (let i = collectedParts.length - 1; i >= 0; i--) {
-            if ((collectedParts[i] as { type: string }).type === event) {
+
+        if (
+          event === "agent-status" ||
+          event === "runner-progress" ||
+          event === "done" ||
+          event === "error"
+        ) {
+          return true;
+        }
+
+        if (
+          event === "recipe" ||
+          event === "media-assets"
+        ) {
+          for (
+            let i = collectedParts.length - 1;
+            i >= 0;
+            i--
+          ) {
+            if (
+              (
+                collectedParts[i] as {
+                  type: string;
+                }
+              ).type === event
+            ) {
               collectedParts.splice(i, 1);
             }
           }
         }
-        collectedParts.push({ type: event, data });
+
+        collectedParts.push({
+          type: event,
+          data,
+        });
+
         return true;
       };
 
-      writer.write("agent-status", { node: "init", status: "running" });
+      writer.write("agent-status", {
+        node: "init",
+        status: "running",
+      });
 
       try {
         await graph.invoke(
@@ -120,8 +217,11 @@ export async function POST(request: Request) {
             threadId,
             userId: user.id,
             startNode,
-            directorBrief: confirmDirectorBrief ? directorBrief : undefined,
-            needsConfirmation: !confirmDirectorBrief,
+            directorBrief: confirmDirectorBrief
+              ? directorBrief
+              : undefined,
+            needsConfirmation:
+              !confirmDirectorBrief,
           },
           {
             configurable: {
@@ -129,46 +229,94 @@ export async function POST(request: Request) {
               writer,
             },
             recursionLimit: 100,
-          },
+          }
         );
-        console.log(`[agent-chat:${requestId}] graph completed`, {
-          threadId,
-          elapsedMs: Date.now() - startedAt,
-          collectedParts: collectedParts.length,
-        });
+
+        console.log(
+          `[agent-chat:${requestId}] graph completed`,
+          {
+            threadId,
+            elapsedMs: Date.now() - startedAt,
+            collectedParts: collectedParts.length,
+          }
+        );
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(`[agent-chat:${requestId}] graph error:`, message, {
-          threadId,
-          elapsedMs: Date.now() - startedAt,
-          writerClosed: writer.isClosed(),
-        });
+        const message =
+          err instanceof Error
+            ? err.message
+            : String(err);
+
+        console.error(
+          `[agent-chat:${requestId}] graph error:`,
+          message,
+          {
+            threadId,
+            elapsedMs: Date.now() - startedAt,
+            writerClosed: writer.isClosed(),
+          }
+        );
+
         try {
           writer.write("error", { message });
-          await writer.writeText("error-text", `Error: ${message}`, 0);
+
+          await writer.writeText(
+            "error-text",
+            `Error: ${message}`,
+            0
+          );
         } catch {}
       } finally {
-        request.signal.removeEventListener("abort", onAbort);
-        try { await writer.close(); } catch {}
+        request.signal.removeEventListener(
+          "abort",
+          onAbort
+        );
 
-        // Persist assistant message
+        // Persist assistant message BEFORE closing SSE
+
         if (collectedParts.length) {
           try {
             if (confirmDirectorBrief) {
-              // Merge into the existing director-brief assistant message
-              const existing = await prisma.message.findFirst({
-                where: { threadId, role: "assistant" },
-                orderBy: { createdAt: "desc" },
-              });
-              if (existing && Array.isArray(existing.parts)) {
-                const existingParts = existing.parts as Record<string, unknown>[];
+              const existing =
+                await prisma.message.findFirst({
+                  where: {
+                    threadId,
+                    role: "assistant",
+                  },
+                  orderBy: {
+                    createdAt: "desc",
+                  },
+                });
+
+              if (
+                existing &&
+                Array.isArray(existing.parts)
+              ) {
+                const existingParts =
+                  existing.parts as Record<
+                    string,
+                    unknown
+                  >[];
+
                 const kept = existingParts.filter(
-                  (p) => p.type !== "recipe" && p.type !== "media-assets",
+                  (p) =>
+                    p.type !== "recipe" &&
+                    p.type !== "media-assets"
                 );
-                const mergedParts = [...kept, ...collectedParts];
+
+                const mergedParts = [
+                  ...kept,
+                  ...collectedParts,
+                ];
+
                 await prisma.message.update({
-                  where: { id: existing.id },
-                  data: { parts: JSON.parse(JSON.stringify(mergedParts)) as Prisma.InputJsonValue },
+                  where: {
+                    id: existing.id,
+                  },
+                  data: {
+                    parts: JSON.parse(
+                      JSON.stringify(mergedParts)
+                    ) as Prisma.InputJsonValue,
+                  },
                 });
               } else {
                 await prisma.message.create({
@@ -177,12 +325,16 @@ export async function POST(request: Request) {
                     userId: user.id,
                     role: "assistant",
                     content: "",
-                    parts: JSON.parse(JSON.stringify(collectedParts)) as Prisma.InputJsonValue,
-                    metadata: JSON.parse(JSON.stringify({
-                      source: "langgraph",
-                      agent: "open-director",
-                      prompt,
-                    })) as Prisma.InputJsonValue,
+                    parts: JSON.parse(
+                      JSON.stringify(collectedParts)
+                    ) as Prisma.InputJsonValue,
+                    metadata: JSON.parse(
+                      JSON.stringify({
+                        source: "langgraph",
+                        agent: "open-director",
+                        prompt,
+                      })
+                    ) as Prisma.InputJsonValue,
                   },
                 });
               }
@@ -193,33 +345,66 @@ export async function POST(request: Request) {
                   userId: user.id,
                   role: "assistant",
                   content: "",
-                  parts: JSON.parse(JSON.stringify(collectedParts)) as Prisma.InputJsonValue,
-                  metadata: JSON.parse(JSON.stringify({
-                    source: "langgraph",
-                    agent: "open-director",
-                    prompt,
-                  })) as Prisma.InputJsonValue,
+                  parts: JSON.parse(
+                    JSON.stringify(collectedParts)
+                  ) as Prisma.InputJsonValue,
+                  metadata: JSON.parse(
+                    JSON.stringify({
+                      source: "langgraph",
+                      agent: "open-director",
+                      prompt,
+                    })
+                  ) as Prisma.InputJsonValue,
                 },
               });
             }
+
+            console.log(
+              `[agent-chat:${requestId}] assistant message saved`,
+              {
+                threadId,
+                collectedParts: collectedParts.length,
+              }
+            );
           } catch (err) {
-            console.error(`[agent-chat:${requestId}] failed to persist assistant message:`, err);
+            console.error(
+              `[agent-chat:${requestId}] failed to persist assistant message:`,
+              err
+            );
           }
         }
-        console.log(`[agent-chat:${requestId}] stream finished`, {
-          threadId,
-          elapsedMs: Date.now() - startedAt,
-          writerClosed: writer.isClosed(),
-          collectedParts: collectedParts.length,
-        });
+
+        // Close SSE only after persistence
+
+        try {
+          await writer.close();
+        } catch {}
+
+        console.log(
+          `[agent-chat:${requestId}] stream finished`,
+          {
+            threadId,
+            elapsedMs: Date.now() - startedAt,
+            writerClosed: writer.isClosed(),
+            collectedParts: collectedParts.length,
+          }
+        );
       }
     },
+
     cancel(reason) {
-      console.warn(`[agent-chat:${requestId}] response stream canceled`, {
-        threadId,
-        reason: reason instanceof Error ? reason.message : String(reason),
-        elapsedMs: Date.now() - startedAt,
-      });
+      console.warn(
+        `[agent-chat:${requestId}] response stream canceled`,
+        {
+          threadId,
+          reason:
+            reason instanceof Error
+              ? reason.message
+              : String(reason),
+          elapsedMs: Date.now() - startedAt,
+        }
+      );
+
       writer?.markClosed("response-stream-cancel");
     },
   });
@@ -228,7 +413,7 @@ export async function POST(request: Request) {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
     },
   });
 }
