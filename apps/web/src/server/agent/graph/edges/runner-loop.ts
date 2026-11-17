@@ -1,3 +1,4 @@
+
 import type { RunnerTask } from "@/server/agent/media-provider";
 
 export function afterUpdateAndContinue(state: {
@@ -8,7 +9,8 @@ export function afterUpdateAndContinue(state: {
   const totalTasks = state.runnerTasks.length;
 
   if (completedAssetCount < totalTasks) {
-    return "auto_runner";
+    return "runner_executor";
   }
+
   return "update_state";
 }
