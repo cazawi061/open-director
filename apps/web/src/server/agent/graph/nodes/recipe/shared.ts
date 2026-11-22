@@ -10,7 +10,7 @@ export function createModel() {
     configuration: {
       baseURL: process.env.OPENAI_BASE_URL,
     },
-    streaming: true,
+    streaming: false,
     maxRetries: 0,
     timeout: 45_000,
   });
@@ -41,11 +41,14 @@ export function sendRecipeProgress(
   recipe: Partial<DirectorRecipe>,
   section: "subjects" | "scenes" | "complete",
 ) {
-  writer?.write("recipe", { ...recipe, _section: section });
+  writer?.write("recipe", {
+    ...recipe,
+    _section: section,
+  });
 }
 
 export const sleep = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 const LANGUAGE_LABELS: Record<string, string> = {
   "zh-CN": "Chinese (中文)",
@@ -69,6 +72,7 @@ export function resolveLanguage(
   if (recipeLanguage) return recipeLanguage;
 
   const briefLang = directorBrief?.language;
+
   if (
     typeof briefLang === "string" &&
     LANGUAGE_LABELS[briefLang]
