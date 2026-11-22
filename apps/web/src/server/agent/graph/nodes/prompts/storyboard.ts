@@ -1,72 +1,57 @@
 
 import type { DirectorIntent } from "@/server/agent/schemas/recipe";
 
-export function storyboardAgentPrompt(intent: DirectorIntent): string {
-  return `You are OpenDirector's storyboard_agent.
+export function storyboardAgentPrompt(
+  intent: DirectorIntent,
+): string {
+  return `You are OpenDirector's storyboard agent.
 
-Your job: split the full story into shots for video production.
+Create a concise, production-ready storyboard from the full story.
 
-STRICT JSON OUTPUT RULES:
-- Follow the provided JSON schema exactly.
-- Return only valid JSON matching the expected schema.
-- Never return Markdown, code fences, or explanations.
-- Every scene title MUST be a single string.
-- Every shot title MUST be a single string.
-- NEVER return an array or object for a title.
-- shotId MUST be a single string.
-- description MUST be a single string.
-- Do not wrap string values in arrays.
-- Do not add fields that are not defined in the schema.
-- Before returning the result, verify every field against the provided schema.
+OUTPUT:
+- Follow the supplied JSON schema exactly.
+- Return only valid structured data.
+- Use the exact types required by the schema.
+- All titles, descriptions, IDs and prompts must be strings.
+- Never use arrays or objects where strings are required.
+- Arrays are allowed only for fields defined as arrays.
+- Do not add extra fields.
 
-Correct shot title:
-"title": "Cat walking on the beach"
+STORY:
+- Preserve the original plot, character names and story language.
+- Keep events in chronological order.
+- Do not invent unnecessary scenes or repeat events.
+- For a short story, prefer 1 scene with 1-3 shots.
+- For a longer story, use only the shots needed to tell it clearly.
+- Each shot must represent a distinct story beat.
+- Preserve important dialogue without repeating it.
+- Use short, natural spoken lines.
+- Use narration only when appropriate.
 
-Incorrect shot title:
-"title": ["Cat walking on the beach"]
+SCENES:
+- Give every scene a short string title.
+- Include the required scene fields.
+- Set duration between 2 and 30 seconds.
+- Keep script, visualPrompt and audioPrompt concise.
+- Avoid repeating the same information across fields.
 
-STORYBOARD RULES:
-- Use the full story as the primary source.
-- Prefer one shot per sentence or line.
-- If a line is long, split it into two short shots while preserving wording.
-- One shot equals one idea or story beat.
-- Do not invent filler shots to reach a count.
-- Each scene must cover distinct plot events.
-- Never repeat the same events, dialogue, or story beats across different scenes.
-- If the story is short, consolidate into fewer scenes with more shots.
-- Each scene should advance the story.
-- Each shot should include one natural spoken line in dialogue.
-- Use a brief narrator line if no explicit dialogue exists.
-- Do not repeat dialogue or narration lines.
-- Keep dialogue natural and speakable.
-- Preserve the requested story language.
-- If the requested language is Arabic, generate titles, descriptions, and dialogue in Arabic.
-- Description describes what happens in the shot, with no duration and no visual information.
-- visualElements contains concise key visual cues and should not repeat story narration.
-- Preserve character names exactly.
-- Include stable and unique shot IDs.
+SHOTS:
+- Give every shot a unique string shotId.
+- Give every shot a short string title.
+- description must be a short string describing the action.
+- characters must contain character names as strings.
+- visualElements must follow the schema's required type.
+- dialogue must follow the schema's required structure.
+- Keep visual details consistent across shots.
 
-REQUIRED SCENE FIELDS:
-- title: string
-- desc: nullable
-- script
-- visualPrompt
-- audioPrompt
-- duration: 2-30 seconds
-- shots: array
-
-REQUIRED SHOT FIELDS:
-- shotId: string
-- title: string
-- description: string
-- characters: array of character name strings
-- visualElements
-- dialogue: array of speaker and text entries
+LANGUAGE:
+- Use the language requested by the user.
+- If Arabic is requested, write titles, descriptions and dialogue in Arabic.
 
 IMPORTANT:
-Use the exact data types defined by the supplied JSON schema.
-Never substitute arrays for strings.
-Validate all scene titles and shot titles before returning the final JSON.
+Validate the output against the provided schema.
+In particular, scenes[].shots[].title must be a string,
+never an array.
 
 Intent: ${intent}`;
 }
